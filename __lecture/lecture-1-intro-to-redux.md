@@ -168,7 +168,25 @@ const FridgeContents = () => {
   );
 };
 ```
+```js
+//correction
+const FridgeContents = () => {
+  const fridgeItems = useSelector((state) => {
+    return state.fridge;
+  })
+  return (
+    <div>
+      <h1>Your fridge contains:</h1>
 
+      {fridgeItems.map(item => (
+        <div key={item}>
+          {item}
+        </div>
+      ))}
+    </div>
+  );
+};
+```
 ---
 
 ```js
@@ -206,6 +224,20 @@ const App = () => {
   );
 };
 ```
+```js
+//correction
+const App = () => {
+  const movie = useSelector((state) => {
+    return state.myFavoriteMovies[state.boyfriendFavouriteGenre];
+  })
+
+  return (
+    <div>
+      Tonight, we'll watch: {movie}
+    </div>
+  );
+};
+```
 
 ---
 
@@ -230,7 +262,29 @@ const UserProfile = () => {
 
   return (
     <div>
-      You live at {address}.
+      You live at {streetAddress}.
+    </div>
+  );
+};
+```
+```js
+//correction
+const UserProfile = () => {
+
+  const streetAddress = useSelector((state) => {
+    const street = state.address.line1;
+    const apt = state.address.line2;
+    if (apt) {
+      return `${street}, ${apt}`
+    }
+    else {
+      return `${street}`
+    }
+  })
+
+  return (
+    <div>
+      You live at {streetAddress}.
     </div>
   );
 };
@@ -276,7 +330,19 @@ const OnlineUsers = () => {
   ));
 };
 ```
+```js
+//correction
+const OnlineUsers = () => {
+  const myStatus = useSelector((state) => state.myStatus)
+  const onlineUsers = useSelector((state) => state.users)
 
+  return onlineUsers.map(user => (
+    <div key={user.name}>
+      {user.name}
+    </div>
+  ));
+};
+```
 ---
 
 # Actions and Action Creators
@@ -322,14 +388,9 @@ We have another hook, `useDispatch`.
 ---
 
 ```js
-import {
-  useDispatch,
-  useSelector,
-} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 
-import {
-  markTodoAsCompleted
-} from '../actions';
+import {markTodoAsCompleted} from '../actions';
 
 const TodoList = () => {
   const todos = useSelector(state => state.todos);
@@ -380,6 +441,34 @@ const OnlineUsers = () => {
   ));
 };
 ```
+```js
+//correction
+import { useDispatch, useSelector } from 'react-redux';
+
+import { pokeUser } from '../actions';
+
+const OnlineUsers = () => {
+  const dispatch = useDispatch();
+
+  const onlineUsers = useSelector((state) => {
+    return state.users.filter((user) => user.online);
+  });
+
+  return onlineUsers.map((user) => (
+    <div key={user.name}>
+      <button onClick={() => dispatch(pokeUser(user))}>Message {user.name}</button>
+    </div>
+  ));
+};
+
+//IN ACTION.JS
+export const pokeUser = (user) => {
+  return {
+    type: "POKE_USER",
+    user
+  }
+}
+```
 
 ---
 
@@ -405,6 +494,29 @@ const FridgeForm = () => {
   );
 };
 ```
+```js
+//correction
+import { useDispatch } from 'react-redux';
+
+import { addItemToFridge } from '../actions';
+
+const FridgeForm = () => {
+  const [value, setValue] = React.useState('');
+  const dispatch = useDispatch();
+
+  return (
+    <form
+      onSubmit={() => {
+        dispatch(addItemToFridge(value));
+      }}
+    >
+      <input type='text' onChange={(ev) => setValue(ev.target.value)} />
+
+      <button type='submit'>Submit</button>
+    </form>
+  );
+};
+```
 
 ---
 
@@ -420,6 +532,30 @@ const Modal = () => {
     const handleKeydown = (ev) => {
       // TODO: Close modal when 'Escape' is pressed
       // (Hint: use ev.key)
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, []);
+
+  return <div>Hello</div>;
+};
+```
+```js
+//correction
+import { useDispatch } from 'react-redux';
+
+import { dismissModal } from '../actions';
+
+const Modal = () => {
+  const dispatch = useDispatch();
+
+  React.useEffect(() => {
+    const handleKeydown = (ev) => {
+      if (ev.key === "escape") dispatch(dismissModal);
     };
 
     window.addEventListener('keydown', handleKeydown);
